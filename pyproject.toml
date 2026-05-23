@@ -11,5 +11,13 @@ dev = [
     "pydantic>=2.13.4",
     "pytest>=9.0.3",
     "pyyaml>=6.0.3",
+    "ruff>=0.15.14",
 ]
 
+
+[tool.ruff.lint]
+extend-select = ["I"]
+
+
+[tool.ruff.lint.isort]
+case-sensitive = true
