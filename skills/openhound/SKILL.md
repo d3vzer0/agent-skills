@@ -9,9 +9,10 @@ Use this skill for any OpenHound collector task.
 
 ## Critical Rules (Always apply)
 
-1. Read `.agents/standards/openhound.md` before editing collector code. This includes important standards and best practices for OpenHound collector development that are not repeated in the reference docs.
+
+1. Read `references/architecture.md` before editing collector code. This includes important standards and best practices for OpenHound collector development that are not repeated in the reference docs.
 2. Based on the requested task, select the matching reference from the routing table. These contain specific rules and examples for different types of collector work.
-3. For broad collector work, or when creating a new collector, read `.agents/standards/workflow.md`.
+3. For broad collector work, or when creating a new collector, read `references/plan-collector.md`.
 4. Important: Before finishing collector and graph behavior changes read `references/validate-extension.md`.
 
 ### Route By Task
