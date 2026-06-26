@@ -107,6 +107,7 @@ Use `max_table_nesting=0` unless there is a concrete reason to let DLT infer nes
 - Avoid collecting fields that are not needed for graph conversion, lookup, metadata, or debugging.
 - Do not collect or emit secrets, tokens, credentials, private keys, or credential-equivalent material.
 - Name resources after the raw table they produce, using stable plural table names where practical.
+- Resource and transformer registration must be  explicit. Do not create @app.resource(...) or @app.transformer(...) registrations dynamically via loops, helper factories, closures, reflection, or config-driven generation. For every table that needs collection, add a separately named resource or transformer function.
 
 ## Checklist
 
@@ -117,3 +118,6 @@ Use `max_table_nesting=0` unless there is a concrete reason to let DLT infer nes
 - Parent resources reused by transformers are assigned to variables before piping.
 - All resources/transformers are returned from the source function.
 - Read `references/validate-extension.md` before finishing.
+- Each collected table has one explicit named function.
+- Each function has its own @app.resource(...) or @app.transformer(...) decorator.
+- No dynamic registration through loops, factories, registries, or generated functions.
