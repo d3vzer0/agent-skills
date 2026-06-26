@@ -16,7 +16,7 @@ collect -> preproc -> convert
 | `preproc` | Optionally load raw tables into DuckDB and build lookup/derived tables. |
 | `convert` | Read JSONL plus lookup data and emit OpenGraph nodes/edges. |
 
-All phases are registered in `src/<pkg>/main.py` using one `OpenHound("<source>", <root-kind>)` app instance and the `@app.collect()`, `@app.preproc()`, and `@app.convert()` decorators.
+All phases are registered in `src/<pkg>/main.py` using one `OpenHound("<source>", source_kind=<kind>)` app instance and the `@app.collect()`, `@app.preproc()`, and `@app.convert()` decorators.
 
 ## Required Rules
 

@@ -45,7 +45,7 @@ Import the DLT source function inside phase functions to avoid import cycles wit
 
 ## App Rules
 
-- Define exactly one `app = OpenHound(...)` instance.
+- Define exactly one `app = OpenHound("<source>", source_kind=<kind>)` instance.
 - Keep the app in `src/<pkg>/main.py`.
 - Models should import `app` from `openhound_<pkg>.main`.
 - Do not create local app instances in model, source, graph, lookup, or transform modules.
@@ -82,7 +82,7 @@ The convert phase returns the DLT source and an extras dictionary. The extras di
 
 ```python
 @app.convert(lookup=EXLookup)
-def convert(ctx: ConvertContext) -> DltSource:
+def convert(ctx: ConvertContext):
     from .source import source as myservice_source
 
     return myservice_source(), {}

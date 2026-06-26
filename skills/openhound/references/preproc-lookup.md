@@ -75,12 +75,12 @@ from openhound.core.lookup import LookupManager
 
 
 class EXLookup(LookupManager):
-    
+
     def __init__(self, client: DuckDBPyConnection, schema: str = "myservice"):
         super().__init__(client, schema)
         self.schema = schema
         self.client = client
-        
+
     @lru_cache
     def group_id_for(self, name: str) -> str | None:
         return self._find_single_object(
@@ -105,7 +105,7 @@ Register the lookup class on `@app.convert(...)`:
 
 ```python
 @app.convert(lookup=EXLookup)
-def convert(ctx: ConvertContext) -> DltSource:
+def convert(ctx: ConvertContext):
     from .source import source as myservice_source
 
     return myservice_source(), {}

@@ -34,7 +34,7 @@ from openhound_<pkg>.graph import EXNodeProperties
 @dataclass
 class AssetProperties(EXNodeProperties):
     """Properties for the Asset node.
-    
+
     Attributes:
         hostname: The asset hostname.
     """
@@ -78,6 +78,7 @@ class Asset(BaseAsset):
     id: str
     name: str
     groups: list[str]
+    hostname: str
 
     @property
     def as_node(self) -> EXNode:
@@ -86,6 +87,7 @@ class Asset(BaseAsset):
             name=self.name,
             displayname=self.name,
             environmentid=self._extras["environmentid"],
+            hostname=self.hostname
         )
         return EXNode(properties=properties, kinds=[nk.ASSET])
 
