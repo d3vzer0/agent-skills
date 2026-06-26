@@ -117,7 +117,7 @@ Use `max_table_nesting=0` unless there is a concrete reason to let DLT infer nes
 - The Pydantic model should be saved under `models/` and exported from `models/__init__.py`.
 - Parent resources reused by transformers are assigned to variables before piping.
 - All resources/transformers are returned from the source function.
-- Read `references/validate-extension.md` before finishing.
 - Each collected table has one explicit named function.
 - Each function has its own @app.resource(...) or @app.transformer(...) decorator.
 - No dynamic registration through loops, factories, registries, or generated functions.
+- Read `references/validate-extension.md` before finishing.
