@@ -19,7 +19,12 @@ Review these before finishing:
 - Models using `self._lookup` have `@app.convert(lookup=...)` registered.
 - Tables required by lookup methods are included in the `preproc` map or created by transforms.
 - `source.py` credentials are declared with `dlt.secrets.value`.
+- Multi-auth collectors use one DLT `configspec` credential class per auth mode.
+- Multi-auth collectors accept one `credentials: Union[...] = dlt.secrets.value` source parameter.
+- Auth-specific runtime code is isolated in `auth.py` or `client.py`, not resource or transformer functions.
+- Resource and transformer registration remains static and explicit; auth mode must not dynamically create decorated functions.
 - `extension.yaml` credentials and parameters match the source function inputs.
+- `extension.yaml` documents all supported auth modes and required fields.
 - `models/__init__.py` exports newly added models.
 
 ## Validation Commands
@@ -49,6 +54,8 @@ If a command cannot run because dependencies, credentials, generated template va
 | Declare edges on a different asset than the emitter | Put `EdgeDef(...)` on the emitting asset. |
 | Emit nodes without `environmentid` | Set `environmentid` to the root/environment node ID. |
 | Guess another node's ID manually | Use `ConditionalEdgePath` with stable `PropertyMatch` constraints. |
+| Use one credential class with many optional secret fields for multi-auth | Use one `@configspec` credential class per auth mode and a `Union[...]` source parameter. |
+| Register resources dynamically based on auth mode | Define resources statically and choose explicit resource groups to return. |
 
 ## Search Checks
 

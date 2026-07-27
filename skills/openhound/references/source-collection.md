@@ -28,6 +28,8 @@ Environment variables can also provide the same values, for example `SOURCES__SO
 
 If authentication is complex, add a dedicated `auth.py` module.
 
+If the collector supports multiple authentication methods, do not add many optional secret parameters to the source function and do not use one oversized credential object with mostly optional fields. Use `references/multi-auth.md` for one DLT `configspec` credential class per auth mode and a `Union[...] = dlt.secrets.value` source parameter.
+
 ## Source Context
 
 Use a context object to keep resource functions simple and consistent:
@@ -107,7 +109,8 @@ Use `max_table_nesting=0` unless there is a concrete reason to let DLT infer nes
 - Avoid collecting fields that are not needed for graph conversion, lookup, metadata, or debugging.
 - Do not collect or emit secrets, tokens, credentials, private keys, or credential-equivalent material.
 - Name resources after the raw table they produce, using stable plural table names where practical.
-- Resource and transformer registration must be  explicit. Do not create @app.resource(...) or @app.transformer(...) registrations dynamically via loops, helper factories, closures, reflection, or config-driven generation. For every table that needs collection, add a separately named resource or transformer function.
+- Resource and transformer registration must be static and explicit. Do not create `@app.resource(...)` or `@app.transformer(...)` registrations dynamically via loops, helper factories, closures, reflection, or config-driven generation. For every table that needs collection, add a separately named resource or transformer function.
+- Authentication or collection-mode branching must not create resources or transformers dynamically. Define resources and transformers explicitly, then choose which explicit resources or resource groups to return from the source function.
 
 ## Checklist
 
@@ -118,6 +121,7 @@ Use `max_table_nesting=0` unless there is a concrete reason to let DLT infer nes
 - Parent resources reused by transformers are assigned to variables before piping.
 - All resources/transformers are returned from the source function.
 - Each collected table has one explicit named function.
-- Each function has its own @app.resource(...) or @app.transformer(...) decorator.
+- Each function has its own `@app.resource(...)` or `@app.transformer(...)` decorator.
 - No dynamic registration through loops, factories, registries, or generated functions.
+- Multi-auth collectors follow `references/multi-auth.md`.
 - Read `references/validate-extension.md` before finishing.

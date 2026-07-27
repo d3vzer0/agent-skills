@@ -23,6 +23,7 @@ Use this skill for any OpenHound collector task.
 | Define graph base classes, common properties, node IDs, or edge properties | `references/graph-schema.md` |
 | Register `collect`, `preproc`, `convert`, metadata, or entry points | `references/register-extension.md` |
 | Implement API clients, auth, DLT resources, transformers, or secrets | `references/source-collection.md` |
+| Implement multiple authentication options with DLT configspec unions | `references/multi-auth.md` |
 | Add or modify models, node assets, edge assets, kind constants, or exports | `references/add-asset.md` |
 | Add DuckDB transforms, lookup methods, lookup registration, or `self._lookup` usage | `references/preproc-lookup.md` |
 | Validate collector changes before finishing | `references/validate-extension.md` |
@@ -32,5 +33,6 @@ Use this skill for any OpenHound collector task.
 - If the task touches multiple areas, read every matching reference.
 - If adding or changing collector behavior, always read `references/validate-extension.md` before finishing.
 - If the task involves a new collector or broad redesign, start with `references/plan-collector.md`.
+- If a collector supports more than one authentication method, read `references/multi-auth.md` and `references/source-collection.md`.
 - If models use `self._lookup`, also read `references/preproc-lookup.md` and `references/register-extension.md`.
 - If adding a new collected resource, usually read `references/source-collection.md`, `references/add-asset.md`, and `references/validate-extension.md`.

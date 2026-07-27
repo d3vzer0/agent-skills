@@ -8,6 +8,7 @@ Do not implement collection, models, lookup logic, or metadata from this referen
 
 - Target service name, slug, and intended short graph prefix.
 - Authentication method, required credentials, and non-secret configuration values.
+- Whether the collector has one authentication method or multiple authentication methods.
 - API base URL, versioning model, pagination style, rate limits, and retry behavior.
 - Primary resources to collect, such as users, groups, devices, roles, policies, repositories, or memberships.
 - Sample API responses or schema references for each resource.
@@ -37,6 +38,8 @@ List required secrets and parameters:
 - Environment variable equivalents where useful.
 - Non-secret parameters such as tenant, organization, region, or API host.
 - Whether a dedicated `auth.py` module is likely needed.
+- For multi-auth collectors, list each credential class, required fields, optional fields, and shared non-secret parameters.
+- Decide whether auth mode only affects client construction or also affects collection scope.
 
 ### 3. Resources To Collect
 
@@ -82,9 +85,10 @@ Map the plan to references:
 1. `references/graph-schema.md` for graph base types and ID strategy.
 2. `references/register-extension.md` for phase registration and metadata.
 3. `references/source-collection.md` for API resources and transformers.
-4. `references/add-asset.md` for each model, node, edge, and kind constant.
-5. `references/preproc-lookup.md` only when cross-table lookup is required.
-6. `references/validate-extension.md` before finishing.
+4. `references/multi-auth.md` when multiple authentication methods are required.
+5. `references/add-asset.md` for each model, node, edge, and kind constant.
+6. `references/preproc-lookup.md` only when cross-table lookup is required.
+7. `references/validate-extension.md` before finishing.
 
 ## Output Format
 
@@ -98,6 +102,7 @@ Produce a short collector design brief:
 
 ## Credentials And Parameters
 - <secret or parameter>
+- <auth modes and credential classes if multi-auth is needed>
 
 ## Resources
 | Resource | API endpoint | DLT table | Model | Type |
