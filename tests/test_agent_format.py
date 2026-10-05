@@ -18,61 +18,63 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 SUBAGENTS_DIR = REPO_ROOT / "subagents"
 AGENT_NAME_RE = r"^[a-z0-9]+(?:-[a-z0-9]+)*$"
 MARKDOWN_LINK_RE = re.compile(r"!?(?<!\\)\[[^\]]+\]\(([^)]+)\)")
-FLAT_PERMISSION_KEYS = {
-    "todowrite",
-    "question",
-    "webfetch",
-    "websearch",
-    "doom_loop",
-}
-
 NonEmptyString = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1)]
-AgentName = Annotated[str, StringConstraints(pattern=AGENT_NAME_RE)]
-PermissionAction = Literal["allow", "ask", "deny"]
-PermissionRule = PermissionAction | dict[NonEmptyString, PermissionAction]
-Permissions = PermissionAction | dict[NonEmptyString, PermissionRule]
+ModelReference = Annotated[
+    str, StringConstraints(pattern=r"^[^/#\s]+/[^#\s]+(?:#[^#\s]+)?$")
+]
+
+
+class PermissionRule(BaseModel):
+    model_config = ConfigDict(extra="forbid", strict=True)
+
+    action: NonEmptyString
+    resource: NonEmptyString
+    effect: Literal["allow", "ask", "deny"]
+
+    @field_validator("action")
+    @classmethod
+    def action_must_not_use_legacy_names(cls, value: str) -> str:
+        if value in {"bash", "task"}:
+            raise ValueError(
+                "use V2 actions shell and subagent instead of bash and task"
+            )
+        return value
+
+
+class ExpandedModelReference(BaseModel):
+    model_config = ConfigDict(extra="forbid", strict=True)
+
+    providerID: NonEmptyString
+    model: NonEmptyString
+    variant: NonEmptyString | None = None
+
+
+class AgentRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid", strict=True)
+
+    headers: dict[NonEmptyString, str] = Field(default_factory=dict)
+    body: dict[str, Any] = Field(default_factory=dict)
 
 
 class AgentFrontmatter(BaseModel):
-    # This collection deliberately rejects unknown provider options at top level.
-    # Provider-specific settings belong in options to make typos detectable.
+    # Validate documented V2 Markdown fields; the body supplies the system prompt.
     model_config = ConfigDict(extra="forbid", strict=True)
 
     description: NonEmptyString
     mode: Literal["subagent"]
-    permission: Permissions
-    name: AgentName | None = None
-    model: Annotated[str, StringConstraints(pattern=r"^[^/\s]+/\S+$")] | None = None
-    variant: NonEmptyString | None = None
+    permissions: list[PermissionRule]
+    model: ModelReference | ExpandedModelReference | None = None
     hidden: bool | None = None
-    color: (
-        Annotated[str, StringConstraints(pattern=r"^#[0-9a-fA-F]{6}$")]
-        | Literal[
-            "primary", "secondary", "accent", "success", "warning", "error", "info"
-        ]
-        | None
-    ) = None
+    color: Annotated[str, StringConstraints(pattern=r"^#[0-9a-fA-F]{6}$")] | None = None
     steps: Annotated[int, Field(gt=0, le=9007199254740991)] | None = None
-    options: dict[str, Any] | None = None
-    disable: bool | None = None
-    temperature: float | None = None
-    top_p: float | None = None
+    disabled: bool | None = None
+    request: AgentRequest | None = None
 
     @field_validator("description")
     @classmethod
     def description_must_be_one_line(cls, value: str) -> str:
         if "\n" in value or "\r" in value:
             raise ValueError("description must be a single line")
-        return value
-
-    @field_validator("permission")
-    @classmethod
-    def permission_rules_must_match_tool_shape(cls, value: Permissions) -> Permissions:
-        # OpenCode permits custom tool keys with PermissionRuleConfig.
-        if isinstance(value, dict):
-            for tool, rule in value.items():
-                if tool in FLAT_PERMISSION_KEYS and isinstance(rule, dict):
-                    raise ValueError(f"{tool} only accepts a flat permission action")
         return value
 
 
@@ -134,11 +136,7 @@ def test_subagents_directory_contains_only_agent_files() -> None:
 
 def test_each_agent_has_valid_frontmatter_and_body() -> None:
     for path in agent_files():
-        frontmatter, body = parse_agent_file(path)
-        if frontmatter.name is not None:
-            assert frontmatter.name == path.stem, (
-                f"{path}: frontmatter name must match filename stem"
-            )
+        _, body = parse_agent_file(path)
         assert body, f"{path}: Markdown body must not be empty"
         assert body.startswith("# "), f"{path}: body should start with an H1 heading"
 
@@ -157,25 +155,24 @@ def test_agent_markdown_links_resolve_inside_repository() -> None:
             assert resolved.exists(), f"{path}: link target does not exist: {link}"
 
 
-def validate_task_references(
+def validate_subagent_references(
     path: Path, frontmatter: AgentFrontmatter, names: set[str]
 ) -> None:
-    if not isinstance(frontmatter.permission, dict):
-        return
-    rules = frontmatter.permission.get("task")
-    if not isinstance(rules, dict):
-        return
-    for name, action in rules.items():
-        if action != "allow" or any(char in name for char in "*?"):
+    for rule in frontmatter.permissions:
+        if rule.action != "subagent" or rule.effect != "allow":
             continue
-        assert name in names, f"{path}: allowed task agent does not exist: {name}"
+        if any(char in rule.resource for char in "*?"):
+            continue
+        assert rule.resource in names, (
+            f"{path}: allowed subagent does not exist: {rule.resource}"
+        )
 
 
 def test_agent_delegation_references_exist() -> None:
     names = {path.stem for path in agent_files()}
     for path in agent_files():
         frontmatter, _ = parse_agent_file(path)
-        validate_task_references(path, frontmatter, names)
+        validate_subagent_references(path, frontmatter, names)
 
 
 @pytest.mark.parametrize(
@@ -184,22 +181,64 @@ def test_agent_delegation_references_exist() -> None:
         ({"description": " "}, ("description",)),
         ({"description": "First line\nSecond line"}, ("description",)),
         ({"mode": "primary"}, ("mode",)),
-        ({"permission": {"edit": "approve"}}, ("permission",)),
-        ({"permission": {"question": {"*": "allow"}}}, ("permission",)),
-        ({"permission": {"task": {" ": "allow"}}}, ("permission",)),
+        ({"permissions": {"edit": "deny"}}, ("permissions",)),
+        ({"permissions": "deny"}, ("permissions",)),
+        (
+            {"permissions": [{"action": "edit", "resource": "*", "effect": "approve"}]},
+            ("permissions", 0, "effect"),
+        ),
+        (
+            {"permissions": [{"action": "edit", "effect": "deny"}]},
+            ("permissions", 0, "resource"),
+        ),
+        (
+            {"permissions": [{"action": " ", "resource": "*", "effect": "deny"}]},
+            ("permissions", 0, "action"),
+        ),
+        (
+            {"permissions": [{"action": "edit", "resource": " ", "effect": "deny"}]},
+            ("permissions", 0, "resource"),
+        ),
+        (
+            {"permissions": [{"action": "task", "resource": "*", "effect": "deny"}]},
+            ("permissions", 0, "action"),
+        ),
+        (
+            {"permissions": [{"action": "bash", "resource": "*", "effect": "deny"}]},
+            ("permissions", 0, "action"),
+        ),
+        (
+            {
+                "permissions": [
+                    {"action": "edit", "resource": "*", "effect": "deny", "typo": True}
+                ]
+            },
+            ("permissions", 0, "typo"),
+        ),
         ({"steps": True}, ("steps",)),
         ({"color": "not-a-theme-color"}, ("color",)),
         ({"model": "missing-provider"}, ("model",)),
+        ({"model": "anthropic/model#"}, ("model",)),
         ({"prompt": "Not a frontmatter field"}, ("prompt",)),
+        ({"system": "Put the prompt in the Markdown body"}, ("system",)),
+        ({"permission": {"edit": "deny"}}, ("permission",)),
+        ({"temperature": 0.1}, ("temperature",)),
+        ({"top_p": 0.9}, ("top_p",)),
+        ({"disable": True}, ("disable",)),
+        ({"tools": {"edit": False}}, ("tools",)),
+        ({"maxSteps": 5}, ("maxSteps",)),
+        ({"variant": "high"}, ("variant",)),
+        ({"options": {}}, ("options",)),
+        ({"request": {"headers": {"x-agent": 1}}}, ("request", "headers", "x-agent")),
     ],
 )
 def test_agent_frontmatter_rejects_invalid_config(
-    updates: dict[str, Any], error_location: tuple[str, ...]
+    updates: dict[str, Any], error_location: tuple[str | int, ...]
 ) -> None:
     data = {
         "description": "Reviews an OpenHound integration.",
         "mode": "subagent",
-        "permission": {"edit": "deny"},
+        "permissions": [{"action": "edit", "resource": "*", "effect": "deny"}],
         **updates,
     }
     with pytest.raises(ValidationError) as exc_info:
@@ -210,20 +249,62 @@ def test_agent_frontmatter_rejects_invalid_config(
     )
 
 
-def test_task_references_handle_wildcards_and_reject_missing_agents() -> None:
+def test_subagent_references_handle_wildcards_and_reject_missing_agents() -> None:
     frontmatter = AgentFrontmatter.model_validate(
         {
             "description": "Coordinates bounded OpenHound work.",
             "mode": "subagent",
-            "permission": {
-                "task": {"*": "deny", "openhound-*": "allow", "worker": "allow"},
-                "edit": {"*": "deny", "tests/**": "allow"},
-                "jira_*": "allow",
+            "permissions": [
+                {"action": "subagent", "resource": "*", "effect": "deny"},
+                {"action": "subagent", "resource": "openhound-*", "effect": "allow"},
+                {"action": "subagent", "resource": "worker", "effect": "allow"},
+                {"action": "edit", "resource": "*", "effect": "deny"},
+                {"action": "edit", "resource": "tests/**", "effect": "allow"},
+                {"action": "jira_*", "resource": "*", "effect": "allow"},
+            ],
+        }
+    )
+    assert [rule.resource for rule in frontmatter.permissions[:3]] == [
+        "*",
+        "openhound-*",
+        "worker",
+    ]
+    validate_subagent_references(Path("coordinator.md"), frontmatter, {"worker"})
+    with pytest.raises(AssertionError, match="allowed subagent does not exist: worker"):
+        validate_subagent_references(Path("coordinator.md"), frontmatter, set())
+
+
+@pytest.mark.parametrize(
+    "model",
+    [
+        "anthropic/claude-sonnet-4-5",
+        "anthropic/claude-sonnet-4-5#high",
+        {"providerID": "anthropic", "model": "claude-sonnet-4-5", "variant": "high"},
+    ],
+)
+def test_agent_frontmatter_accepts_v2_model_and_request(
+    model: str | dict[str, str],
+) -> None:
+    frontmatter = AgentFrontmatter.model_validate(
+        {
+            "description": "Reviews changes for correctness and regressions.",
+            "mode": "subagent",
+            "model": model,
+            "permissions": [
+                {"action": "edit", "resource": "*", "effect": "deny"},
+                {"action": "shell", "resource": "*", "effect": "deny"},
+            ],
+            "disabled": False,
+            "color": "#ff6b6b",
+            "steps": 8,
+            "request": {
+                "headers": {"x-agent": "reviewer"},
+                "body": {"temperature": 0.1},
             },
         }
     )
-    validate_task_references(Path("coordinator.md"), frontmatter, {"worker"})
-    with pytest.raises(
-        AssertionError, match="allowed task agent does not exist: worker"
-    ):
-        validate_task_references(Path("coordinator.md"), frontmatter, set())
+    assert frontmatter.model_dump(exclude_none=True)["model"] == model
+    assert frontmatter.request is not None
+    assert frontmatter.request.headers == {"x-agent": "reviewer"}
+    assert frontmatter.request.body == {"temperature": 0.1}
+    assert frontmatter.disabled is False
