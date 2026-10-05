@@ -1,6 +1,6 @@
 ---
 description: OpenHound development coordinator. Coordinates OpenHound collector development through planning, implementation, testing, quality checks and graph review.
-mode: subagent
+mode: primary
 permissions:
   - action: edit
     resource: "*"
