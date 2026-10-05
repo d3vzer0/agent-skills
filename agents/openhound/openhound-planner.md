@@ -1,6 +1,7 @@
 ---
 description: Plans (scoped) OpenHound collector changes, mapping API resources to OpenGraph graph assets using verifiable acceptance criteria.
 mode: subagent
+model: openai/gpt-6.1-sol#high
 permissions:
   - action: edit
     resource: "*"

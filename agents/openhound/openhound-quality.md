@@ -1,6 +1,7 @@
 ---
 description: Runs read-only lint, formatting and type checks and reviews OpenHound conventions and maintainability for a work item.
 mode: subagent
+model: openai/gpt-6-luna#medium
 permissions:
   - action: edit
     resource: "*"
@@ -35,6 +36,8 @@ Read the ticket, acceptance criteria, plan, implementation/test handoffs, releva
 Read-only means no lint autofix, formatting writes, configuration changes, dependency-file updates or production edits through shell commands.
 
 ## Handoff
+
+Return ambiguous architectural or behavioral findings to the coordinator for Sol-level assessment rather than guessing; keep deterministic lint and type-check evidence separate from those questions.
 
 Return:
 

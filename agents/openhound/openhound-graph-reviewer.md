@@ -1,6 +1,7 @@
 ---
 description:  Reviews OpenHound graph semantics, stable IDs, edge resolution and BloodHound compatibility against ticket requirements.
 mode: subagent
+model: openai/gpt-6.1-sol#high
 permissions:
   - action: edit
     resource: "*"

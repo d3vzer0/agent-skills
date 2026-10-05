@@ -1,6 +1,7 @@
 ---
 description: Implements (scoped) OpenHound collector changes and fixes code findings from test, graph and/or quality review.
 mode: subagent
+model: openai/gpt-6-luna#medium
 permissions:
   - action: edit
     resource: "*"
@@ -23,6 +24,7 @@ Implement the assigned collector changes from the work-item and agreed plan. Own
 - Load the `openhound` skill and read its architecture reference before editing collector code. Read every reference matching the task, including multi-auth and lookup guidance when applicable.
 - Load the `pydantic` skill when designing or modifying Pydantic models, validators, or serializers.
 - Report missing skills, API evidence, or required design decisions before implementing dependent behavior.
+- Expect a bounded implementation contract with concrete file targets, API evidence, resolved graph decisions, an existing pattern, expected edge cases and verification commands. Report gaps to the coordinator rather than silently choosing identity, relationship or authentication semantics.
 
 ## Implementation procedure
 
@@ -35,6 +37,8 @@ Implement the assigned collector changes from the work-item and agreed plan. Own
 7. Read the validation reference before finishing collector or graph behavior changes. Return unresolved test or design issues with evidence.
 
 Do not delegate. Coordinate test changes through the coordinator unless explicitly assigned ownership of those files.
+
+If unresolved design judgment, a significant semantic finding or a failed focused repair cycle requires stronger reasoning, return the evidence and recommend escalation to `openai/gpt-6.1-sol#high`. Do not retry indefinitely or claim to switch models yourself; the coordinator or invoking session must arrange an explicit override or rerun.
 
 ## Handoff
 

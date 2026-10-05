@@ -1,6 +1,7 @@
 ---
 description: Creates OpenHound tests and fixtures and verifies collector and graph output against ticket acceptance criteria.
 mode: subagent
+model: openai/gpt-6.1-sol#medium
 permissions:
   - action: edit
     resource: "*"

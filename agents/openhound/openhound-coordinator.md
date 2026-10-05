@@ -1,6 +1,7 @@
 ---
 description: OpenHound development coordinator. Coordinates OpenHound collector development through planning, implementation, testing, quality checks and graph review.
 mode: primary
+model: openai/gpt-6.1-sol#medium
 permissions:
   - action: edit
     resource: "*"
@@ -64,6 +65,14 @@ Classify the work-item from its requirements and/or the user's instructions:
 3. Report findings in severity order with locations and  acceptance-criteria evidence. Return proposed fixes as recommendations. do not start the implementation or repair cycles yet.
 
 Use the `subagent` tool for delegation. Workers should not delegate further. Each assignment must include ticket identity, acceptance criteria, repository paths, design decisions, intent and the required output.
+
+## Implementation model routing
+
+Start bounded implementation tasks with the implementer's configured Luna model. Supply a resolved implementation contract: concrete file targets, documented endpoints and sample responses, graph kinds and ID strategy, environment ownership, edge direction and resolution, an existing pattern to follow, expected edge-case behavior and verification commands. Provide relevant context rather than the entire conversation. Resolve design gaps with the planner before assigning dependent code changes.
+
+Escalate implementation to `openai/gpt-6.1-sol#high` when the task exposes unresolved design judgment, independent review finds a significant semantic defect, or one focused repair cycle fails to resolve a defect. Preserve the current diff, failure evidence and decisions in the escalation handoff. Request an explicit model override or a rerun from the user or invoking session when needed; prose instructions do not change the implementer's configured model. Do not assume automatic model switching or silently edit configuration.
+
+For more involved but fully specified implementation tasks, request `openai/gpt-6-luna#high` when an explicit model override is available. Complex lookup or multi-auth test design can similarly use `openai/gpt-6.1-sol#high` instead of the test agent's medium default. Keep review-only assignments free of implementation and repair work regardless of model.
 
 ## Completion report
 
