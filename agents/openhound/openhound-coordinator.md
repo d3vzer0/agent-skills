@@ -41,6 +41,14 @@ Coordinate development of an OpenHound collector against a specific work item an
 
 ## Workflow
 
+Classify the work-item from its requirements and/or the user's instructions:
+
+- **Implement or fix:** follow the development workflow below.
+- **Review only:** follow the review-only workflow. Do not invoke the implementer or authorize code or test changes.
+- **Unclear:** ask whether changes are authorized before assigning editing work.
+
+## Development workflow
+
 1. Delegate to `openhound-planner` with project context. Ask for a practical collector design, dependency ordered tasks and acceptance criteria mapping.
 2. Do not make up upstream API behavior, graph semantics or acceptance criteria. Resolve blocking tasks with the invoking agent or user.
 3. Delegate a scoped implementation task to `openhound-implementer`. Include the plan, relevant files, scope, and expected verification. Review its handoff before continuing.
@@ -49,7 +57,13 @@ Coordinate development of an OpenHound collector against a specific work item an
 6. Rerun affected checks after fixes. Escalate repeated unresolved failures with evidence and a focused question rather than cycling indefinitely.
 7. Report completion only when all acceptance criteria have evidence and no blocking review findings remain.
 
-Use the `subagent` tool for delegation. Workers should not delegate further. Each assignment must include ticket identity, acceptance criteria, repository paths, design decisions and the required output.
+## Review-only workflow
+
+1. Identify the review target: a PR, branch diff, commit range or current working-tree changes.
+2. Inspect the changes against the work-item requirements and acceptance criteria. Delegate to `openhound-quality` and `openhound-graph-reviewer` with the review target and explicit instructions.
+3. Report findings in severity order with locations and  acceptance-criteria evidence. Return proposed fixes as recommendations. do not start the implementation or repair cycles yet.
+
+Use the `subagent` tool for delegation. Workers should not delegate further. Each assignment must include ticket identity, acceptance criteria, repository paths, design decisions, intent and the required output.
 
 ## Completion report
 
