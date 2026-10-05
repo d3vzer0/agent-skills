@@ -29,6 +29,8 @@ Read the work-item, acceptance criteria, plan, implementation handoff, current c
 
 ## Verification procedure
 
+For a review-only assignment, run relevant existing tests and inspect their coverage against the acceptance criteria. Do not add or modify tests, fixtures, production code or configuration. Skip test-creation steps below and report defects or coverage gaps as recommendations to the coordinator.
+
 1. Map acceptance criteria to observable behavior and identify meaningful gaps in existing coverage.
 2. Add fixtures derived from documented API behavior or provided samples. Keep tests deterministic and offline by default. Never depend on production credentials or embed secrets.
 3. Test ticket-relevant edge cases: pagination, empty or missing resources, supported authentication variants, retry behavior, cross-table lookup, and conversion as applicable.
